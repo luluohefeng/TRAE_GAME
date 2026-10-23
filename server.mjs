@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const DIST = join(ROOT, 'dist');
 const PORT = Number(process.env.PORT ?? 8787);
-const HOST = process.env.HOST ?? '127.0.0.1';
+const HOST = '0.0.0.0'; // 生产环境强制绑定所有网卡，兼容 Render 等 PaaS 平台
 const AI_BASE_URL = (process.env.AI_BASE_URL ?? 'https://api.deepseek.com').replace(/\/+$/, '');
 const AI_API_KEY = process.env.AI_API_KEY ?? '';
 const AI_MODEL = process.env.AI_MODEL ?? 'deepseek-chat';
