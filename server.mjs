@@ -1,12 +1,40 @@
 // AI 适配服务：托管 dist/ 静态产物 + /api/ai 转发到任意 OpenAI 兼容接口。
-// 零依赖（仅 Node 内置模块）。API key 只从环境变量读取，绝不打印。
+// 零依赖（仅 Node 内置模块）。配置从环境变量或项目根目录 .env 读取，密钥绝不打印。
 import { createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const DIST = join(ROOT, 'dist');
+
+/** 读取项目根目录 .env（KEY=VALUE，# 注释，支持成对引号）；已存在的环境变量优先，不覆盖 */
+function loadEnvFile() {
+  let text;
+  try {
+    text = readFileSync(join(ROOT, '.env'), 'utf8');
+  } catch {
+    return;
+  }
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const eq = line.indexOf('=');
+    if (eq <= 0) continue;
+    const key = line.slice(0, eq).trim();
+    let value = line.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!(key in process.env)) process.env[key] = value;
+  }
+}
+loadEnvFile();
+
 const PORT = Number(process.env.PORT ?? 8787);
 const HOST = process.env.HOST ?? '127.0.0.1';
 const AI_BASE_URL = (process.env.AI_BASE_URL ?? 'https://api.deepseek.com').replace(/\/+$/, '');

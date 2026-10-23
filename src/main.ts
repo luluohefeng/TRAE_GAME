@@ -16,7 +16,8 @@ import { animateMatrix } from './game/animation.ts';
 import { createView, drawScene } from './render/canvas.ts';
 import { renderHand, type HandUI } from './render/cards.ts';
 import { renderLatex, toMatrixLatex } from './render/latex.ts';
-import { generateLevel, getHint } from './ai/client.ts';
+import { DIFFICULTY_RULES, generateRandomLevel, type Difficulty } from './game/generator.ts';
+import { getHint } from './ai/client.ts';
 import { runDemo } from './demo.ts';
 import level1Json from './levels/level1.json';
 import level2Json from './levels/level2.json';
@@ -93,9 +94,20 @@ workshopBtn.textContent = '矩阵工坊';
 const hintBtn = document.createElement('button');
 hintBtn.className = 'nav-btn ai-btn';
 hintBtn.textContent = 'AI 提示';
-const aiLevelBtn = document.createElement('button');
-aiLevelBtn.className = 'nav-btn ai-btn';
-aiLevelBtn.textContent = 'AI 关卡';
+const difficultySelect = document.createElement('select');
+difficultySelect.className = 'difficulty-select';
+difficultySelect.setAttribute('aria-label', '随机关卡难度');
+const DIFFICULTY_ORDER: Difficulty[] = ['easy', 'normal', 'hard'];
+for (const d of DIFFICULTY_ORDER) {
+  const opt = document.createElement('option');
+  opt.value = d;
+  opt.textContent = DIFFICULTY_RULES[d].label;
+  if (d === 'normal') opt.selected = true;
+  difficultySelect.appendChild(opt);
+}
+const randomLevelBtn = document.createElement('button');
+randomLevelBtn.className = 'nav-btn gen-btn';
+randomLevelBtn.textContent = '随机关卡';
 const demoBtn = document.createElement('button');
 demoBtn.className = 'nav-btn demo-btn';
 demoBtn.textContent = '演示模式';
@@ -106,7 +118,8 @@ controls.appendChild(prevBtn);
 controls.appendChild(nextBtn);
 controls.appendChild(workshopBtn);
 controls.appendChild(hintBtn);
-controls.appendChild(aiLevelBtn);
+controls.appendChild(difficultySelect);
+controls.appendChild(randomLevelBtn);
 controls.appendChild(demoBtn);
 app.appendChild(controls);
 
@@ -304,7 +317,8 @@ function refreshControls(): void {
     levelIndex !== WORKSHOP_INDEX || animating || demoRunning || state.status !== 'playing' || !inputsValid;
   for (const b of quickBtns) b.disabled = animating || demoRunning;
   hintBtn.disabled = aiBusy || animating || demoRunning;
-  aiLevelBtn.disabled = aiBusy || animating || demoRunning;
+  randomLevelBtn.disabled = aiBusy || animating || demoRunning;
+  difficultySelect.disabled = animating || demoRunning;
 }
 
 // ---------- 工坊输入校验与预览 ----------
@@ -481,20 +495,11 @@ hintBtn.addEventListener('click', () => {
     });
 });
 
-aiLevelBtn.addEventListener('click', () => {
-  if (aiBusy || animating) return;
-  aiBusy = true;
-  refreshControls();
-  hintLine.textContent = '生成关卡中…';
-  generateLevel({ from: state.level.id })
-    .then((level) => {
-      levels.push(level);
-      loadLevelAt(levels.length - 1);
-    })
-    .finally(() => {
-      aiBusy = false;
-      refreshControls();
-    });
+randomLevelBtn.addEventListener('click', () => {
+  if (aiBusy || animating || demoRunning) return;
+  const difficulty = difficultySelect.value as Difficulty;
+  levels.push(loadLevel(generateRandomLevel(difficulty)));
+  loadLevelAt(levels.length - 1);
 });
 
 // ---------- 演示模式 ----------
