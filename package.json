@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && npx vite build",
     "preview": "vite preview",
     "serve": "node server.mjs"
   },
@@ -16,5 +16,8 @@
     "@types/katex": "^0.16.8",
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
+  },
+    "engines": {
+    "node": ">=24.22.1 <25.0.0"
   }
 }
