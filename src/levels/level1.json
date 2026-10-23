@@ -1,0 +1,12 @@
+{
+  "id": "level-1",
+  "name": "第一关：旋转开门",
+  "key": [2, 2],
+  "lock": [-2, 2],
+  "forbidden": [{ "x": 0.5, "y": -2.5, "w": 1, "h": 1 }],
+  "maxSteps": 1,
+  "deck": [
+    { "cardId": "rotate90", "uses": 2 },
+    { "cardId": "mirrorX", "uses": 1 }
+  ]
+}

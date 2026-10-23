@@ -1,0 +1,17 @@
+{
+  "id": "workshop",
+  "name": "矩阵工坊（沙盒）",
+  "key": [2, 1],
+  "lock": [-2, 2],
+  "forbidden": [
+    { "x": -0.5, "y": -2.5, "w": 1, "h": 1 },
+    { "x": 1.5, "y": -1, "w": 1, "h": 1 }
+  ],
+  "maxSteps": 12,
+  "deck": [
+    { "cardId": "rotate90", "uses": 3 },
+    { "cardId": "shearX", "uses": 3 },
+    { "cardId": "projectX", "uses": 2 },
+    { "cardId": "mirrorX", "uses": 2 }
+  ]
+}
