@@ -252,6 +252,30 @@ body {
   background: #2c4a6b;
 }
 
+.gen-btn {
+  background: #1f3a35;
+  border-color: #3d6b60;
+}
+
+.gen-btn:hover:not(:disabled) {
+  background: #2c5248;
+}
+
+.difficulty-select {
+  padding: 10px 8px;
+  font-size: 15px;
+  background: #1f2b47;
+  color: #e8eaf0;
+  border: 1px solid #3d4a6b;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.difficulty-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .demo-btn {
   background: #3a2a4a;
   border-color: #6a4a8a;

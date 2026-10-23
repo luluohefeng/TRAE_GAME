@@ -2,7 +2,9 @@ import { IDENTITY, apply, det, isInvertible, multiply, type Mat2, type Vec2 } fr
 import { applyCard, applyCustomCard, createGame, undo, type Card, type Level } from './state.ts';
 import { evaluate } from './judge.ts';
 import { FALLBACK_HINTS, FALLBACK_LEVELS, pickFallbackHint } from '../ai/fallback.ts';
-import { bfsMinSteps, isValidLevelJson, sanitizeHint } from '../ai/client.ts';
+import { sanitizeHint } from '../ai/client.ts';
+import { bfsMinSteps, isValidLevelJson } from './validate.ts';
+import { DIFFICULTY_RULES, generateRandomLevel, type Difficulty } from './generator.ts';
 import { DEMO_SCRIPT } from '../demo.ts';
 import level1Json from '../levels/level1.json' with { type: 'json' };
 import level2Json from '../levels/level2.json' with { type: 'json' };
@@ -228,6 +230,26 @@ test('演示脚本结构合法且约90秒', () => {
     indicesOk &&
     captionsOk
   );
+});
+
+// 14. 随机关卡：各难度连续生成 4 关，Schema 合法、BFS 最少步数 = maxSteps 且落在难度区间、初始钥匙不在禁区
+test('随机关卡各难度可解且符合区间', () => {
+  const tiers: Difficulty[] = ['easy', 'normal', 'hard'];
+  for (const d of tiers) {
+    const rule = DIFFICULTY_RULES[d];
+    for (let i = 0; i < 4; i++) {
+      const lvl = generateRandomLevel(d);
+      if (!isValidLevelJson(lvl)) return false;
+      if (bfsMinSteps(lvl) !== lvl.maxSteps) return false;
+      if (lvl.maxSteps < rule.minSteps || lvl.maxSteps > rule.maxSteps) return false;
+      const [kx, ky] = lvl.key;
+      const inZone = lvl.forbidden.some(
+        (z) => kx >= z.x && kx <= z.x + z.w && ky >= z.y && ky <= z.y + z.h,
+      );
+      if (inZone) return false;
+    }
+  }
+  return true;
 });
 
 console.log(`测试结果：${passed} 通过，${failed} 失败`);
