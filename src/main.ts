@@ -17,6 +17,12 @@ import { createView, drawScene } from './render/canvas.ts';
 import { renderHand, type HandUI } from './render/cards.ts';
 import { renderLatex, toMatrixLatex } from './render/latex.ts';
 import { DIFFICULTY_RULES, generateRandomLevel, type Difficulty } from './game/generator.ts';
+import {
+  buildCampaign,
+  campaignTierLabel,
+  campaignTierOf,
+  CAMPAIGN_LENGTH,
+} from './game/campaign.ts';
 import { getHint } from './ai/client.ts';
 import { runDemo } from './demo.ts';
 import level1Json from './levels/level1.json';
@@ -28,10 +34,11 @@ const levels: Level[] = [
   loadLevel(level1Json as LevelJson),
   loadLevel(level2Json as LevelJson),
   loadLevel(level3Json as LevelJson),
+  ...buildCampaign().map((j) => loadLevel(j)),
   loadLevel(workshopJson as LevelJson),
 ];
-const MAIN_LEVELS = 3;
-const WORKSHOP_INDEX = 3;
+const MAIN_LEVELS = CAMPAIGN_LENGTH; // 3 教学关 + 37 生成关
+const WORKSHOP_INDEX = levels.length - 1;
 
 const ANIMATION_MS = 300;
 const FORMULA_DEBOUNCE_MS = 100;
@@ -116,6 +123,9 @@ randomLevelBtn.textContent = '随机卡关';
 const demoBtn = document.createElement('button');
 demoBtn.className = 'nav-btn demo-btn';
 demoBtn.textContent = '演示模式';
+const selectBtn = document.createElement('button');
+selectBtn.className = 'nav-btn select-btn';
+selectBtn.textContent = '选关';
 controls.appendChild(handEl);
 controls.appendChild(undoBtn);
 controls.appendChild(resetBtn);
@@ -126,7 +136,46 @@ controls.appendChild(hintBtn);
 controls.appendChild(difficultySelect);
 controls.appendChild(randomLevelBtn);
 controls.appendChild(demoBtn);
+controls.appendChild(selectBtn);
 app.appendChild(controls);
+
+// ---------- 选关面板 ----------
+const levelSelect = document.createElement('div');
+levelSelect.id = 'level-select';
+app.appendChild(levelSelect);
+let selectOpen = false;
+
+/** 重建 40 格选关网格：按难度着色，通关打 ✓，未解锁置灰 */
+function renderLevelSelect(): void {
+  levelSelect.textContent = '';
+  for (let i = 0; i < MAIN_LEVELS; i++) {
+    const cell = document.createElement('button');
+    const tier = i < 3 ? 'tutorial' : campaignTierOf(i);
+    cell.className = `level-cell tier-${tier}`;
+    cell.textContent = String(i + 1);
+    cell.title = `${campaignTierLabel(i)} · ${levels[i].name}`;
+    if (beaten[i]) {
+      cell.classList.add('done');
+      cell.title = `已通关 · ${cell.title}`;
+    }
+    if (i === levelIndex) cell.classList.add('current');
+    cell.disabled = !isUnlocked(i) || demoRunning;
+    cell.addEventListener('click', () => {
+      if (animating || demoRunning) return;
+      selectOpen = false;
+      levelSelect.classList.remove('open');
+      loadLevelAt(i);
+    });
+    levelSelect.appendChild(cell);
+  }
+}
+
+selectBtn.addEventListener('click', () => {
+  if (animating || demoRunning) return;
+  selectOpen = !selectOpen;
+  levelSelect.classList.toggle('open', selectOpen);
+  if (selectOpen) renderLevelSelect();
+});
 
 // ---------- 矩阵工坊面板 ----------
 const workshopPanel = document.createElement('div');
@@ -229,8 +278,32 @@ let aiBusy = false;
 let demoRunning = false;
 /** 演示取消标记：当前步骤结束后停止脚本 */
 let demoCancelled = false;
-/** 主线三关已通关标记 */
-const beaten: boolean[] = [false, false, false];
+/** 主线已通关标记（localStorage 持久化） */
+const SAVE_KEY = 'jieka-progress-v1';
+function loadProgress(): boolean[] {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    const arr = raw ? (JSON.parse(raw) as unknown) : null;
+    if (Array.isArray(arr) && arr.length === MAIN_LEVELS && arr.every((v) => typeof v === 'boolean')) {
+      return arr as boolean[];
+    }
+  } catch {
+    /* 存档损坏则重新开始 */
+  }
+  return new Array(MAIN_LEVELS).fill(false);
+}
+const beaten: boolean[] = loadProgress();
+function saveProgress(): void {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(beaten));
+  } catch {
+    /* 写入失败（隐私模式等）静默忽略 */
+  }
+}
+/** 关卡解锁：第 1 关恒开放，其余需通关前一关 */
+function isUnlocked(index: number): boolean {
+  return index === 0 || beaten[index - 1];
+}
 
 function redraw(): void {
   drawScene(canvas, view, state.level, displayM, highlightZone, ghostM);
@@ -238,7 +311,7 @@ function redraw(): void {
 
 function updateLevelLine(): void {
   if (levelIndex < MAIN_LEVELS) {
-    levelLine.textContent = `第 ${levelIndex + 1} / ${MAIN_LEVELS} 关 · ${state.level.name}`;
+    levelLine.textContent = `第 ${levelIndex + 1} / ${MAIN_LEVELS} 关 · ${state.level.name} · ${campaignTierLabel(levelIndex)}`;
   } else if (levelIndex === WORKSHOP_INDEX) {
     levelLine.textContent = `${state.level.name} · 沙盒，不保证可解`;
   } else {
@@ -324,6 +397,7 @@ function refreshControls(): void {
   hintBtn.disabled = aiBusy || animating || demoRunning;
   randomLevelBtn.disabled = aiBusy || animating || demoRunning;
   difficultySelect.disabled = animating || demoRunning;
+  selectBtn.disabled = animating || demoRunning;
 }
 
 // ---------- 工坊输入校验与预览 ----------
@@ -390,6 +464,7 @@ function loadLevelAt(index: number): void {
   hand = renderHand(handEl, state.level.deck, onPlay);
   workshopPanel.style.display = index === WORKSHOP_INDEX ? '' : 'none';
   refreshAll();
+  renderLevelSelect();
   redraw();
   if (index === WORKSHOP_INDEX) updatePreview();
 }
@@ -419,7 +494,11 @@ function startPlay(apply: () => void, onDone?: () => void): void {
     () => {
       animating = false;
       displayM = state.M;
-      if (state.status === 'won' && levelIndex < MAIN_LEVELS) beaten[levelIndex] = true;
+      if (state.status === 'won' && levelIndex < MAIN_LEVELS) {
+        beaten[levelIndex] = true;
+        saveProgress();
+        renderLevelSelect();
+      }
       if (state.status === 'lost') highlightZone = evaluate(state).zoneIndex;
       redraw();
       updateBanner();
@@ -564,7 +643,7 @@ demoBtn.addEventListener('click', () => {
     caption: (t) => {
       hintLine.textContent = `演示：${t}`;
     },
-    load: (i) => loadLevelAt(i),
+    load: (i) => loadLevelAt(i === -1 ? WORKSHOP_INDEX : i),
     play: demoPlay,
     fill: demoFill,
     playCustom: demoPlayCustom,

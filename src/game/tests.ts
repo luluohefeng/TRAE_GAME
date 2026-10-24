@@ -5,6 +5,12 @@ import { FALLBACK_HINTS, FALLBACK_LEVELS, pickFallbackHint } from '../ai/fallbac
 import { sanitizeHint } from '../ai/client.ts';
 import { bfsMinSteps, isValidLevelJson } from './validate.ts';
 import { DIFFICULTY_RULES, generateRandomLevel, type Difficulty } from './generator.ts';
+import {
+  buildCampaign,
+  campaignTierLabel,
+  CAMPAIGN_LENGTH,
+  CAMPAIGN_START,
+} from './campaign.ts';
 import { DEMO_SCRIPT } from '../demo.ts';
 import level1Json from '../levels/level1.json' with { type: 'json' };
 import level2Json from '../levels/level2.json' with { type: 'json' };
@@ -211,7 +217,7 @@ test('演示脚本结构合法且约90秒', () => {
   const indicesOk = DEMO_SCRIPT.every((x) => {
     if (x.action.kind === 'load') {
       current = x.action.index;
-      return current >= 0 && current < decks.length;
+      return current >= -1 && current < decks.length; // -1 = 造卡工坊哨兵
     }
     if (x.action.kind === 'play') {
       return x.action.deckIndex >= 0 && x.action.deckIndex < decks[current];
@@ -250,6 +256,20 @@ test('随机关卡各难度可解且符合区间', () => {
     }
   }
   return true;
+});
+
+// 15. 战役：37 关确定性生成、全部通过 Schema + BFS 校验、难度标签覆盖全档
+test('战役关卡全部可解且确定性生成', () => {
+  const a = buildCampaign();
+  const b = buildCampaign();
+  if (a.length !== CAMPAIGN_LENGTH - CAMPAIGN_START) return false;
+  if (a.some((l, i) => JSON.stringify(l) !== JSON.stringify(b[i]))) return false; // 两次生成完全一致
+  return a.every(
+    (l, i) =>
+      isValidLevelJson(l) &&
+      bfsMinSteps(l) === l.maxSteps &&
+      campaignTierLabel(i + CAMPAIGN_START).length > 0,
+  );
 });
 
 console.log(`测试结果：${passed} 通过，${failed} 失败`);

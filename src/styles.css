@@ -296,3 +296,77 @@ body {
   background: #5a2a2a;
   border-color: #a05a5a;
 }
+
+.select-btn {
+  background: #233043;
+  border-color: #3d5a80;
+}
+
+.select-btn:hover:not(:disabled) {
+  background: #2e4260;
+}
+
+#level-select {
+  display: none;
+  grid-template-columns: repeat(8, 44px);
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #2a3040;
+  border-radius: 6px;
+}
+
+#level-select.open {
+  display: grid;
+}
+
+.level-cell {
+  height: 38px;
+  font-size: 14px;
+  background: #1f2b47;
+  color: #e8eaf0;
+  border: 1px solid #3d4a6b;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.level-cell:hover:not(:disabled) {
+  background: #2a3a5f;
+}
+
+.level-cell:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.level-cell.done {
+  border-color: #3d6b4f;
+  background: #233a2e;
+}
+
+.level-cell.current {
+  outline: 2px solid #f0b429;
+  outline-offset: 1px;
+}
+
+.level-cell.tier-tutorial {
+  background: #1f2b47;
+}
+
+.level-cell.tier-easy {
+  background: #1f3a35;
+  border-color: #3d6b60;
+}
+
+.level-cell.tier-normal {
+  background: #1f2b47;
+}
+
+.level-cell.tier-hard {
+  background: #3a2a1f;
+  border-color: #6b5a3d;
+}
+
+.level-cell.tier-expert {
+  background: #2a2350;
+  border-color: #5246a0;
+}

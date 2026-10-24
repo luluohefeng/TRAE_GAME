@@ -10,12 +10,20 @@ import { pickFallbackLevel } from '../ai/fallback.ts';
 
 const CARD_IDS = Object.keys(CARD_LIBRARY);
 const MAX_ATTEMPTS = 150;
+
+/** RNG 源：默认 Math.random；战役生成器注入种子 RNG 以保证可复现 */
+let rng: () => number = Math.random;
+export function setRngSource(fn: () => number): () => number {
+  const prev = rng;
+  rng = fn;
+  return prev;
+}
 /** 初始钥匙坐标范围（含） */
 const KEY_RANGE = 3;
 /** 关卡坐标绝对值上限 */
 const BOUND = 8;
 
-export type Difficulty = 'easy' | 'normal' | 'hard';
+export type Difficulty = 'easy' | 'normal' | 'hard' | 'expert';
 
 /** 难度规则：决定步数区间、牌堆规模、每张卡次数与禁区数量 */
 export interface DifficultyRule {
@@ -64,19 +72,30 @@ export const DIFFICULTY_RULES: Record<Difficulty, DifficultyRule> = {
     zonesMin: 2,
     zonesMax: 2,
   },
+  expert: {
+    label: '大师',
+    minSteps: 4,
+    maxSteps: 6,
+    deckMin: 3,
+    deckMax: 5,
+    usesMin: 1,
+    usesMax: 2,
+    zonesMin: 2,
+    zonesMax: 3,
+  },
 };
 
 let serial = 0;
 
 function randInt(min: number, max: number): number {
-  return min + Math.floor(Math.random() * (max - min + 1));
+  return min + Math.floor(rng() * (max - min + 1));
 }
 function pickOne<T>(list: T[]): T {
-  return list[Math.floor(Math.random() * list.length)];
+  return list[Math.floor(rng() * list.length)];
 }
 function shuffle<T>(list: T[]): T[] {
   for (let i = list.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     const tmp = list[i];
     list[i] = list[j];
     list[j] = tmp;
@@ -114,10 +133,10 @@ function playSequence(cardIds: string[], seq: number[], key: Vec2): { M: Mat2; p
   return { M, path };
 }
 
-/** 按难度生成一个候选关；不满足约束返回 null */
-function buildCandidate(rule: DifficultyRule): LevelJson | null {
-  const size = randInt(rule.deckMin, Math.min(rule.deckMax, CARD_IDS.length));
-  const cardIds = shuffle([...CARD_IDS]).slice(0, size);
+/** 按难度规则与卡池生成一个候选关；不满足约束返回 null（单次尝试） */
+export function buildCandidate(rule: DifficultyRule, pool: string[] = CARD_IDS): LevelJson | null {
+  const size = randInt(rule.deckMin, Math.min(rule.deckMax, pool.length));
+  const cardIds = shuffle([...pool]).slice(0, size);
   const uses = cardIds.map(() => randInt(rule.usesMin, rule.usesMax));
   const totalUses = uses.reduce((a, b) => a + b, 0);
   if (totalUses < rule.minSteps) return null;
@@ -188,10 +207,10 @@ function buildCandidate(rule: DifficultyRule): LevelJson | null {
 }
 
 /** 随机关卡：按难度多次尝试；极端情况下回退预置关，绝不抛错 */
-export function generateRandomLevel(difficulty: Difficulty = 'normal'): LevelJson {
+export function generateRandomLevel(difficulty: Difficulty = 'normal', pool?: string[]): LevelJson {
   const rule = DIFFICULTY_RULES[difficulty] ?? DIFFICULTY_RULES.normal;
   for (let i = 0; i < MAX_ATTEMPTS; i++) {
-    const level = buildCandidate(rule);
+    const level = buildCandidate(rule, pool);
     if (level) return level;
   }
   return pickFallbackLevel();
