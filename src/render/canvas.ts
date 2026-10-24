@@ -8,8 +8,14 @@ export interface View {
   cy: number;
 }
 
+/** 位图按 devicePixelRatio 放大，绘制坐标系始终使用逻辑像素（800×600），避免缩放模糊/错位 */
+function deviceDpr(): number {
+  return Math.max(1, window.devicePixelRatio || 1);
+}
+
 export function createView(canvas: HTMLCanvasElement): View {
-  return { scale: 36, cx: canvas.width / 2, cy: canvas.height / 2 };
+  const dpr = deviceDpr();
+  return { scale: 36, cx: canvas.width / dpr / 2, cy: canvas.height / dpr / 2 };
 }
 
 function toScreen(view: View, p: Vec2): Vec2 {
@@ -49,8 +55,9 @@ function drawArrowHead(
 
 /** 固定参考系坐标轴：不随 M 变换，始终水平/垂直，灰色虚线，数字每 2 单位、放在轴线另一侧 */
 function drawFixedAxes(ctx: CanvasRenderingContext2D, view: View): void {
-  const w = ctx.canvas.width;
-  const h = ctx.canvas.height;
+  const dpr = deviceDpr();
+  const w = ctx.canvas.width / dpr;
+  const h = ctx.canvas.height / dpr;
   const o = toScreen(view, [0, 0]);
 
   ctx.save();
@@ -121,7 +128,11 @@ function drawAxis(ctx: CanvasRenderingContext2D, view: View, M: Mat2, axis: 'x' 
   ctx.stroke();
 
   // 正方向箭头：截到画布边缘，保证始终可见
-  const tEnd = Math.min(GRID_EXTENT, reachToEdge(origin, [ux, uy], ctx.canvas.width, ctx.canvas.height) / len);
+  const dpr = deviceDpr();
+  const tEnd = Math.min(
+    GRID_EXTENT,
+    reachToEdge(origin, [ux, uy], ctx.canvas.width / dpr, ctx.canvas.height / dpr) / len,
+  );
   if (tEnd > 0.8) drawArrowHead(ctx, at(tEnd), ux, uy, 8, color);
 
   // 轴名：沿正方向靠近箭头处，向侧边让开轴线
@@ -135,6 +146,9 @@ function drawAxis(ctx: CanvasRenderingContext2D, view: View, M: Mat2, axis: 'x' 
 
 /** 沿两条轴画整数刻度与坐标数字；投影重叠时按屏幕距离去重 */
 function drawAxisTicks(ctx: CanvasRenderingContext2D, view: View, M: Mat2): void {
+  const dpr = deviceDpr();
+  const w = ctx.canvas.width / dpr;
+  const h = ctx.canvas.height / dpr;
   const seen: Vec2[] = [];
   for (const axis of ['x', 'y'] as const) {
     const color = axis === 'x' ? AXIS_X_COLOR : AXIS_Y_COLOR;
@@ -151,7 +165,7 @@ function drawAxisTicks(ctx: CanvasRenderingContext2D, view: View, M: Mat2): void
     for (let i = -8; i <= 8; i++) {
       if (i === 0) continue;
       const p = at(i);
-      if (p[0] < 0 || p[0] > ctx.canvas.width || p[1] < 0 || p[1] > ctx.canvas.height) continue;
+      if (p[0] < 0 || p[0] > w || p[1] < 0 || p[1] > h) continue;
       if (seen.some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 14)) continue;
       seen.push(p);
 
@@ -307,9 +321,14 @@ export function drawScene(
 ): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const dpr = deviceDpr();
+  const w = canvas.width / dpr;
+  const h = canvas.height / dpr;
+  // 位图为逻辑尺寸 × DPR：先切到逻辑坐标系绘制，CSS 缩放到位图时保持等比例、无模糊
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = '#141824';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, w, h);
   drawGrid(ctx, view, M);
   if (ghostM) drawGrid(ctx, view, ghostM, true);
   drawZones(ctx, view, level, highlightZone);
