@@ -300,6 +300,8 @@ for (const q of QUICK) {
     inputs.forEach((inp, i) => {
       inp.value = String(q.values[i]);
     });
+    for (const qb of quickBtns) qb.classList.remove('selected');
+    b.classList.add('selected');
     schedulePreview();
   });
   quickRow.appendChild(b);
