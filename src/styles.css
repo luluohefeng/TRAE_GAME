@@ -49,6 +49,7 @@ body {
 
 /* ---------- 布局：桌面双栏（不改 DOM 顺序，纯 grid-area 摆放） ---------- */
 #app {
+  position: relative; /* 胜负浮层相对画布格定位 */
   display: grid;
   grid-template-columns: 820px 372px;
   grid-template-areas:
@@ -58,14 +59,13 @@ body {
     'canvas   rail'
     'status   rail'
     'stack    rail'
-    'banner   rail'
-    'hint     hint'
+    'hint     rail'
     'workshop workshop';
   column-gap: 26px;
-  row-gap: 12px;
+  row-gap: 8px;
   width: fit-content;
   margin: 0 auto;
-  padding: 26px 28px 44px;
+  padding: 14px 28px 24px;
 }
 
 h1 { grid-area: title; }
@@ -74,7 +74,7 @@ h1 { grid-area: title; }
 #game-canvas { grid-area: canvas; }
 #status-line { grid-area: status; }
 #stack-line { grid-area: stack; }
-#banner { grid-area: banner; }
+/* #banner 不再独占一行，改为覆盖在画布格顶部（见下方浮层样式） */
 .controls { grid-area: rail; }
 #hint-line { grid-area: hint; }
 #workshop-panel { grid-area: workshop; }
@@ -89,7 +89,6 @@ h1 { grid-area: title; }
       'canvas'
       'status'
       'stack'
-      'banner'
       'rail'
       'hint'
       'workshop';
@@ -103,6 +102,7 @@ h1 {
   text-align: center;
   font-size: 30px;
   font-weight: 700;
+  line-height: 1.1;
   letter-spacing: 0.16em;
   background: linear-gradient(180deg, #f5f8ff 0%, #c3cff0 68%, #93a6d8 100%);
   -webkit-background-clip: text;
@@ -134,7 +134,7 @@ h1::after {
 /* ---------- 画布 ---------- */
 #game-canvas {
   justify-self: center;
-  max-width: 100%;
+  width: min(720px, 100%);
   height: auto;
   background: #141824;
   border: 1px solid var(--panel-line);
@@ -148,7 +148,7 @@ h1::after {
 /* ---------- 关卡信息 ---------- */
 #level-line {
   justify-self: center;
-  padding: 7px 22px;
+  padding: 5px 20px;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -161,17 +161,17 @@ h1::after {
 #status-line {
   padding-left: 4px;
   color: var(--text-dim);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 #stack-line {
-  min-height: 26px;
+  min-height: 22px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   padding-left: 4px;
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--muted);
 }
 
@@ -179,25 +179,44 @@ h1::after {
   color: #d7e0f5;
 }
 
+/* ---------- 胜负反馈浮层：覆盖在画布格顶部，不占用页面高度 ---------- */
 #banner {
-  min-height: 34px;
+  position: absolute;
+  grid-area: canvas;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding-left: 4px;
-  font-size: 19px;
+  gap: 8px;
+  padding: 6px 18px;
+  font-size: 17px;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--text);
+  background: rgba(8, 12, 22, 0.86);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+#banner:not(.won):not(.lost) {
+  display: none;
 }
 
 #banner.won {
   color: var(--green);
-  text-shadow: 0 0 18px rgba(67, 209, 124, 0.45);
+  border-color: rgba(67, 209, 124, 0.55);
+  text-shadow: 0 0 14px rgba(67, 209, 124, 0.45);
 }
 
 #banner.lost {
   color: var(--red);
-  text-shadow: 0 0 18px rgba(224, 82, 82, 0.45);
+  border-color: rgba(224, 82, 82, 0.55);
+  text-shadow: 0 0 14px rgba(224, 82, 82, 0.45);
 }
 
 #banner-formula .katex {
@@ -205,8 +224,8 @@ h1::after {
 }
 
 #hint-line {
-  min-height: 22px;
-  font-size: 14px;
+  min-height: 20px;
+  font-size: 13.5px;
   color: var(--blue);
   text-align: center;
 }
@@ -217,8 +236,10 @@ h1::after {
   flex-direction: row;
   flex-wrap: wrap;
   align-items: stretch;
-  gap: 10px;
-  padding: 16px;
+  align-content: flex-start; /* 按钮/卡牌保持自然高度，不再被拉高填满面板 */
+  align-self: start;
+  gap: 8px;
+  padding: 12px;
   background: linear-gradient(180deg, rgba(26, 33, 58, 0.85), rgba(17, 22, 40, 0.85));
   border: 1px solid var(--panel-line);
   border-radius: 16px;
@@ -229,8 +250,8 @@ h1::after {
 
 .hand {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(164px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 10px;
   flex: 1 1 100%;
 }
 
@@ -266,8 +287,8 @@ select {
 .undo-btn,
 .reset-btn,
 .nav-btn {
-  padding: 10px 14px;
-  font-size: 14.5px;
+  padding: 8px 10px;
+  font-size: 13.5px;
 }
 
 .card-btn:hover:not(:disabled),
@@ -318,9 +339,8 @@ select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  min-height: 152px;
-  padding: 28px 10px 12px; /* 顶部为徽章行留白 */
+  gap: 2px;
+  padding: 22px 8px 8px; /* 顶部为徽章行留白 */
   background: var(--face);
   border-radius: 12px;
   box-shadow:
@@ -340,10 +360,10 @@ select {
 
 .card-symbol {
   position: absolute;
-  top: 8px;
-  left: 10px;
-  padding: 2px 7px;
-  font-size: 11px;
+  top: 6px;
+  left: 8px;
+  padding: 1px 6px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--accent);
@@ -354,10 +374,10 @@ select {
 
 .card-count {
   position: absolute;
-  top: 8px;
-  right: 10px;
-  padding: 2px 7px;
-  font-size: 11px;
+  top: 6px;
+  right: 8px;
+  padding: 1px 6px;
+  font-size: 10px;
   color: var(--gold);
   background: rgba(242, 193, 78, 0.08);
   border: 1px solid rgba(242, 193, 78, 0.35);
@@ -368,42 +388,42 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  margin: 2px 0 4px;
+  width: 28px;
+  height: 28px;
+  margin: 0 0 3px;
   color: #cfdcff;
   background: radial-gradient(circle at 50% 30%, rgba(140, 170, 255, 0.22), rgba(140, 170, 255, 0.05) 70%);
   border: 1px solid rgba(140, 170, 255, 0.25);
-  border-radius: 9px;
+  border-radius: 8px;
 }
 
 .card-icon svg {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
 }
 
 .card-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
 .card-formula {
-  min-height: 38px;
+  min-height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .card-btn .katex {
-  font-size: 1em;
+  font-size: 0.92em;
 }
 
 .card-desc {
-  min-height: 28px;
-  font-size: 11.5px;
-  line-height: 1.35;
+  min-height: 16px;
+  font-size: 11px;
+  line-height: 1.3;
   text-align: center;
   color: var(--muted);
 }
@@ -478,8 +498,8 @@ select {
 
 /* ---------- 难度选择 ---------- */
 .difficulty-select {
-  padding: 10px 30px 10px 12px;
-  font-size: 14px;
+  padding: 8px 28px 8px 10px;
+  font-size: 13.5px;
   color: var(--text);
   appearance: none;
   -webkit-appearance: none;
