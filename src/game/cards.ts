@@ -27,6 +27,12 @@ export const CARD_LIBRARY: Record<string, Card> = {
     matrix: [[1, 0], [0, -1]],
     symbol: 'M',
   },
+  mirrorY: {
+    id: 'mirrorY',
+    name: 'Y 轴镜像',
+    matrix: [[-1, 0], [0, 1]],
+    symbol: 'M',
+  },  
 };
 
 /** 关卡 JSON 的原始结构（deck 用 cardId 引用卡库） */

@@ -1,6 +1,6 @@
 {
   "id": "workshop",
-  "name": "矩阵工坊（沙盒）",
+  "name": "造卡工坊（沙盒）",
   "key": [2, 1],
   "lock": [-2, 2],
   "forbidden": [
