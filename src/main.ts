@@ -75,8 +75,10 @@ canvasWrap.id = 'canvas-wrap';
 
 const canvas = document.createElement('canvas');
 canvas.id = 'game-canvas';
-canvas.width = 800;
-canvas.height = 600;
+// 逻辑 800×600（4:3），位图按 DPR 放大，绘制/命中恒用逻辑坐标，缩放不变形不模糊
+const CANVAS_DPR = Math.max(1, window.devicePixelRatio || 1);
+canvas.width = Math.round(800 * CANVAS_DPR);
+canvas.height = Math.round(600 * CANVAS_DPR);
 canvasWrap.appendChild(canvas);
 app.appendChild(canvasWrap);
 
