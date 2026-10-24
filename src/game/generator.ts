@@ -175,7 +175,7 @@ function buildCandidate(rule: DifficultyRule): LevelJson | null {
   serial++;
   const level: LevelJson = {
     id: `random-${Date.now()}-${serial}`,
-    name: `随机密室 #${serial} · ${rule.label}`,
+    name: `随机卡关 #${serial} · ${rule.label}`,
     key,
     lock,
     forbidden,

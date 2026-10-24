@@ -22,22 +22,22 @@ export interface DemoStep {
 /** 总停留 ~83s + 10 次出牌动画 ~3s ≈ 86s，约 90 秒 */
 export const DEMO_SCRIPT: DemoStep[] = [
   { caption: '演示开始 · 全程约 90 秒，无需操作', action: { kind: 'load', index: 0 }, waitAfter: 5 },
-  { caption: '第 1 关：打出「旋转90°」，钥匙一步转到位', action: { kind: 'play', deckIndex: 0 }, waitAfter: 5.5 },
-  { caption: '第 2 关：用「水平剪切」把钥匙水平推过去', action: { kind: 'load', index: 1 }, waitAfter: 4 },
-  { caption: '第 2 关 · 第一次剪切：x 增加 y 的值', action: { kind: 'play', deckIndex: 0 }, waitAfter: 3.5 },
-  { caption: '第 2 关 · 第二次剪切：对齐锁，开门', action: { kind: 'play', deckIndex: 0 }, waitAfter: 5.5 },
-  { caption: '第 3 关：故意用错误顺序——先旋转再剪切', action: { kind: 'load', index: 2 }, waitAfter: 5 },
+  { caption: '卡关 1：打出「旋转90°」，钥匙一步转到位', action: { kind: 'play', deckIndex: 0 }, waitAfter: 5.5 },
+  { caption: '卡关 2：用「水平剪切」把钥匙水平推过去', action: { kind: 'load', index: 1 }, waitAfter: 4 },
+  { caption: '卡关 2 · 第一次剪切：x 增加 y 的值', action: { kind: 'play', deckIndex: 0 }, waitAfter: 3.5 },
+  { caption: '卡关 2 · 第二次剪切：对齐锁，解卡开门', action: { kind: 'play', deckIndex: 0 }, waitAfter: 5.5 },
+  { caption: '卡关 3：故意用错误顺序——先旋转再剪切', action: { kind: 'load', index: 2 }, waitAfter: 5 },
   { caption: '错误顺序 1/2：先打出「旋转90°」', action: { kind: 'play', deckIndex: 1 }, waitAfter: 3.5 },
-  { caption: '错误顺序 2/2：再剪切——钥匙落进红色禁区', action: { kind: 'play', deckIndex: 0 }, waitAfter: 7 },
+  { caption: '错误顺序 2/2：再剪切——钥匙被卡进红色禁区', action: { kind: 'play', deckIndex: 0 }, waitAfter: 7 },
   { caption: '重置本关，换正确顺序：先剪后转', action: { kind: 'reset' }, waitAfter: 4 },
   { caption: '正确顺序 1/2：先打出「水平剪切」', action: { kind: 'play', deckIndex: 0 }, waitAfter: 3.5 },
-  { caption: '正确顺序 2/2：再旋转——三关全部通过', action: { kind: 'play', deckIndex: 1 }, waitAfter: 6 },
-  { caption: '进入矩阵工坊：试试自定义 2×2 矩阵', action: { kind: 'load', index: 3 }, waitAfter: 4 },
+  { caption: '正确顺序 2/2：再旋转——三道卡关全部解开', action: { kind: 'play', deckIndex: 1 }, waitAfter: 6 },
+  { caption: '进入造卡工坊：自定义一张自己的矩阵卡', action: { kind: 'load', index: 3 }, waitAfter: 4 },
   { caption: '输入 [[1,1],[0,1]]：预览公式与空间虚影', action: { kind: 'fill', values: [1, 1, 0, 1] }, waitAfter: 5 },
-  { caption: '打出自定义矩阵（消耗 2 步）：空间被斜切', action: { kind: 'playCustom' }, waitAfter: 5.5 },
+  { caption: '打出这张卡（消耗 2 步）：空间被斜切', action: { kind: 'playCustom' }, waitAfter: 5.5 },
   { caption: '再输入投影矩阵 [[1,0],[0,0]]：出现不可逆警告', action: { kind: 'fill', values: [1, 0, 0, 0] }, waitAfter: 5.5 },
-  { caption: '强行打出：投影压线，det(A)=0，判定失败', action: { kind: 'playCustom' }, waitAfter: 7.5 },
-  { caption: '演示结束，感谢观看！现在可自由操作', action: { kind: 'load', index: 0 }, waitAfter: 3 },
+  { caption: '强行打出：投影压线，det(A)=0，卡死了', action: { kind: 'playCustom' }, waitAfter: 7.5 },
+  { caption: '演示结束，感谢观看！现在轮到你来解卡', action: { kind: 'load', index: 0 }, waitAfter: 3 },
 ];
 
 export interface DemoContext {

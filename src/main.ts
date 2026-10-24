@@ -38,9 +38,9 @@ const FORMULA_DEBOUNCE_MS = 100;
 const INPUT_DEBOUNCE_MS = 100;
 const CUSTOM_COST = 2;
 const FAIL_TEXT: Record<string, string> = {
-  forbidden: '钥匙落入禁区',
-  steps: '步数超限',
-  projection: '投影后压线，',
+  forbidden: '钥匙被卡死在禁区',
+  steps: '步数耗尽，钥匙还卡着',
+  projection: '投影压线，空间塌了',
 };
 
 const app = document.querySelector<HTMLDivElement>('#app');
@@ -49,8 +49,13 @@ if (!app) {
 }
 
 const title = document.createElement('h1');
-title.textContent = '矩阵折叠密室';
+title.textContent = '解卡 · 矩阵密室';
 app.appendChild(title);
+
+const subtitle = document.createElement('div');
+subtitle.className = 'subtitle';
+subtitle.textContent = '世界卡住了，打出你的卡。';
+app.appendChild(subtitle);
 
 const levelLine = document.createElement('div');
 levelLine.id = 'level-line';
@@ -65,7 +70,7 @@ app.appendChild(canvas);
 const stackLine = document.createElement('div');
 stackLine.id = 'stack-line';
 const stackLabel = document.createElement('span');
-stackLabel.textContent = '操作栈（最近 5 步）：';
+stackLabel.textContent = '卡栈（最近 5 步）：';
 const stackFormula = document.createElement('span');
 stackFormula.id = 'stack-formula';
 stackLine.appendChild(stackLabel);
@@ -90,7 +95,7 @@ nextBtn.className = 'nav-btn';
 nextBtn.textContent = '下一关';
 const workshopBtn = document.createElement('button');
 workshopBtn.className = 'nav-btn workshop-btn';
-workshopBtn.textContent = '矩阵工坊';
+workshopBtn.textContent = '造卡工坊';
 const hintBtn = document.createElement('button');
 hintBtn.className = 'nav-btn ai-btn';
 hintBtn.textContent = 'AI 提示';
@@ -107,7 +112,7 @@ for (const d of DIFFICULTY_ORDER) {
 }
 const randomLevelBtn = document.createElement('button');
 randomLevelBtn.className = 'nav-btn gen-btn';
-randomLevelBtn.textContent = '随机关卡';
+randomLevelBtn.textContent = '随机卡关';
 const demoBtn = document.createElement('button');
 demoBtn.className = 'nav-btn demo-btn';
 demoBtn.textContent = '演示模式';
@@ -129,7 +134,7 @@ workshopPanel.id = 'workshop-panel';
 
 const panelTitle = document.createElement('div');
 panelTitle.className = 'workshop-title';
-panelTitle.textContent = `矩阵工坊 · 自定义 2×2 矩阵（元素 [-2, 2]，打出消耗 ${CUSTOM_COST} 步，不保证关卡可解）`;
+panelTitle.textContent = `造卡工坊 · 自定义一张 2×2 矩阵卡（元素 [-2, 2]，打出消耗 ${CUSTOM_COST} 步，不保证关卡可解）`;
 workshopPanel.appendChild(panelTitle);
 
 const inputsGrid = document.createElement('div');
@@ -182,7 +187,7 @@ workshopPanel.appendChild(warnLine);
 
 const playCustomBtn = document.createElement('button');
 playCustomBtn.className = 'undo-btn';
-playCustomBtn.textContent = `打出自定义矩阵（${CUSTOM_COST} 步）`;
+playCustomBtn.textContent = `打出这张卡（${CUSTOM_COST} 步）`;
 workshopPanel.appendChild(playCustomBtn);
 
 app.appendChild(workshopPanel);
@@ -292,11 +297,11 @@ const refreshFormulas = debounce(() => {
 function updateBanner(): void {
   bannerFormula.textContent = '';
   if (state.status === 'won') {
-    bannerText.textContent = levelIndex === MAIN_LEVELS - 1 ? '开门！全部通关！' : '开门！';
+    bannerText.textContent = levelIndex === MAIN_LEVELS - 1 ? '解卡！全部通关！' : '解卡！门开了。';
     banner.className = 'won';
   } else if (state.status === 'lost') {
     const { reason } = evaluate(state);
-    bannerText.textContent = `失败：${reason ? FAIL_TEXT[reason] : '未知原因'}`;
+    bannerText.textContent = `卡住了：${reason ? FAIL_TEXT[reason] : '未知原因'}`;
     banner.className = 'lost';
   } else {
     bannerText.textContent = '';

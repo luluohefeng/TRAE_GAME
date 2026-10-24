@@ -108,6 +108,13 @@ body {
   color: #c8cfe0;
 }
 
+.subtitle {
+  margin-top: -6px;
+  font-size: 13px;
+  color: #9aa3b8;
+  letter-spacing: 1px;
+}
+
 #stack-line {
   min-height: 18px;
   font-size: 13px;

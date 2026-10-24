@@ -7,7 +7,7 @@ import type { LevelJson } from '../game/cards.ts';
 export const FALLBACK_LEVELS: LevelJson[] = [
   {
     id: 'fb-rot',
-    name: '演练关 · 旋转',
+    name: '练手卡关 · 旋转',
     key: [2, 2],
     lock: [-2, 2],
     forbidden: [{ x: 0.5, y: -2.5, w: 1, h: 1 }],
@@ -19,7 +19,7 @@ export const FALLBACK_LEVELS: LevelJson[] = [
   },
   {
     id: 'fb-shear',
-    name: '演练关 · 剪切',
+    name: '练手卡关 · 剪切',
     key: [0, 2],
     lock: [4, 2],
     forbidden: [{ x: -2, y: -3, w: 2, h: 1 }],
@@ -31,7 +31,7 @@ export const FALLBACK_LEVELS: LevelJson[] = [
   },
   {
     id: 'fb-combo',
-    name: '演练关 · 先剪后转',
+    name: '练手卡关 · 先剪后转',
     key: [2, 1],
     lock: [-1, 3],
     forbidden: [{ x: 0.5, y: 1.5, w: 1, h: 1 }],
