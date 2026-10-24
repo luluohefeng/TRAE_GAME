@@ -548,6 +548,93 @@ select {
   color: var(--muted);
 }
 
+/* ---------- 卡牌悬停数学提示（迷你矩阵形态 + 行列式 + 性质） ---------- */
+.card-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  z-index: 40;
+  width: 176px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  background: var(--face);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+}
+
+.card-btn:hover:not(:disabled) .card-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.tv-svg {
+  display: block;
+  width: 120px;
+  height: 130px;
+}
+
+.tv-orig {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+
+.tv-poly {
+  fill: rgba(53, 208, 176, 0.14);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.tv-e1 {
+  stroke: var(--accent);
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.tv-e2 {
+  stroke: var(--gold);
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.tip-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: rgba(53, 208, 176, 0.1);
+  border: 1px solid rgba(53, 208, 176, 0.4);
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.tip-det {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold);
+  font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+
+.tip-note {
+  font-size: 11.5px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--muted);
+}
+
 /* 动作按钮配色（语义化淡色，与整体青绿/红/蓝家族一致） */
 .undo-btn {
   background: linear-gradient(180deg, #1d3a33, #162b26);
@@ -812,10 +899,45 @@ select {
   color: #f0b429;
 }
 
+.level-select-progress {
+  font-size: 13px;
+  color: #9aa3b8;
+  letter-spacing: 0.06em;
+}
+
 .level-select-hint {
   font-size: 13px;
   color: #9aa3b8;
 }
+
+.level-select-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 12px;
+  color: #9aa3b8;
+}
+
+.level-select-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+
+.level-select-legend-label {
+  margin-right: 12px;
+}
+
+.level-select-swatch.tier-tutorial { background: #3d4a6b; }
+.level-select-swatch.tier-easy { background: #3d6b60; }
+.level-select-swatch.tier-normal { background: #4a74b8; }
+.level-select-swatch.tier-hard { background: #6b5a3d; }
+.level-select-swatch.tier-expert { background: #5246a0; }
 
 .level-select-grid {
   display: grid;
@@ -856,7 +978,8 @@ select {
 }
 
 .level-cell.tier-tutorial {
-  background: #1f2b47;
+  background: #232c45;
+  border-color: #3d4a6b;
 }
 
 .level-cell.tier-easy {
@@ -865,7 +988,8 @@ select {
 }
 
 .level-cell.tier-normal {
-  background: #1f2b47;
+  background: #1e2c4a;
+  border-color: #4a74b8;
 }
 
 .level-cell.tier-hard {

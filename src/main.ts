@@ -191,20 +191,45 @@ selectHeader.className = 'level-select-header';
 const selectTitle = document.createElement('div');
 selectTitle.className = 'level-select-title';
 selectTitle.textContent = '选关';
+const selectProgress = document.createElement('div');
+selectProgress.className = 'level-select-progress';
 const selectHint = document.createElement('div');
 selectHint.className = 'level-select-hint';
 selectHint.textContent = '通关上一关解锁下一关 · 点击任意已解锁关卡开始';
-const selectBackBtn = document.createElement('button');
-selectBackBtn.className = 'nav-btn';
-selectBackBtn.textContent = '返回游戏';
 selectHeader.appendChild(selectTitle);
-selectHeader.appendChild(selectHint);
+selectHeader.appendChild(selectProgress);
 levelSelect.appendChild(selectHeader);
-levelSelect.appendChild(selectBackBtn);
+
+// 难度图例：与格子配色一一对应
+const selectLegend = document.createElement('div');
+selectLegend.className = 'level-select-legend';
+const LEGEND: { tier: string; label: string }[] = [
+  { tier: 'tutorial', label: '教学' },
+  { tier: 'easy', label: '入门' },
+  { tier: 'normal', label: '普通' },
+  { tier: 'hard', label: '困难' },
+  { tier: 'expert', label: '大师' },
+];
+for (const item of LEGEND) {
+  const swatch = document.createElement('span');
+  swatch.className = `level-select-swatch tier-${item.tier}`;
+  const label = document.createElement('span');
+  label.className = 'level-select-legend-label';
+  label.textContent = item.label;
+  selectLegend.appendChild(swatch);
+  selectLegend.appendChild(label);
+}
+levelSelect.appendChild(selectHint);
+levelSelect.appendChild(selectLegend);
 
 const selectGrid = document.createElement('div');
 selectGrid.className = 'level-select-grid';
 levelSelect.appendChild(selectGrid);
+
+const selectBackBtn = document.createElement('button');
+selectBackBtn.className = 'nav-btn';
+selectBackBtn.textContent = '返回游戏';
+levelSelect.appendChild(selectBackBtn);
 
 app.appendChild(levelSelect);
 let selectOpen = false;
@@ -212,6 +237,8 @@ let selectOpen = false;
 /** 重建 40 格选关网格：按难度着色，通关打 ✓，未解锁置灰 */
 function renderLevelSelect(): void {
   selectGrid.textContent = '';
+  const done = beaten.filter(Boolean).length;
+  selectProgress.textContent = `已通关 ${done} / ${MAIN_LEVELS}`;
   for (let i = 0; i < MAIN_LEVELS; i++) {
     const cell = document.createElement('button');
     const tier = i < 3 ? 'tutorial' : campaignTierOf(i);
