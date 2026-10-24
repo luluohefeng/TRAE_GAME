@@ -364,11 +364,15 @@ app.appendChild(hintLine);
 
 const banner = document.createElement('div');
 banner.id = 'banner';
-const bannerText = document.createElement('span');
+const bannerTitle = document.createElement('div');
+bannerTitle.className = 'banner-title';
+const bannerSub = document.createElement('div');
+bannerSub.className = 'banner-sub';
+const bannerMeta = document.createElement('div');
+bannerMeta.className = 'banner-meta';
 const bannerFormula = document.createElement('span');
 bannerFormula.id = 'banner-formula';
-banner.appendChild(bannerText);
-banner.appendChild(bannerFormula);
+banner.append(bannerTitle, bannerSub, bannerMeta, bannerFormula);
 app.appendChild(banner);
 
 const view = createView(canvas);
@@ -420,7 +424,7 @@ function isUnlocked(index: number): boolean {
 }
 
 function redraw(): void {
-  drawScene(canvas, view, state.level, displayM, highlightZone, ghostM);
+  drawScene(canvas, view, state.level, displayM, highlightZone, ghostM, state.status === 'won');
 }
 
 function showEventBadge(event: RandomEvent): void {
@@ -539,14 +543,23 @@ const refreshFormulas = debounce(() => {
 function updateBanner(): void {
   bannerFormula.textContent = '';
   if (state.status === 'won') {
-    bannerText.textContent = levelIndex === MAIN_LEVELS - 1 ? '解卡！全部通关！' : '解卡！门开了。';
+    bannerTitle.textContent = '解卡成功！';
+    bannerSub.textContent = '密室已开启';
+    const steps = `通关步数 ${state.stepsUsed} / ${state.level.maxSteps}`;
+    const progress =
+      levelIndex < MAIN_LEVELS ? ` · 关卡进度 ${levelIndex + 1} / ${MAIN_LEVELS}` : '';
+    bannerMeta.textContent = steps + progress;
     banner.className = 'won';
   } else if (state.status === 'lost') {
     const { reason } = evaluate(state);
-    bannerText.textContent = `卡住了：${reason ? FAIL_TEXT[reason] : '未知原因'}`;
+    bannerTitle.textContent = `卡住了：${reason ? FAIL_TEXT[reason] : '未知原因'}`;
+    bannerSub.textContent = '';
+    bannerMeta.textContent = '';
     banner.className = 'lost';
   } else {
-    bannerText.textContent = '';
+    bannerTitle.textContent = '';
+    bannerSub.textContent = '';
+    bannerMeta.textContent = '';
     banner.className = '';
   }
 }
@@ -559,6 +572,8 @@ function refreshControls(): void {
   resetBtn.disabled = locked;
   prevBtn.disabled = locked || levelIndex === 0;
   nextBtn.disabled = locked || levelIndex >= MAIN_LEVELS - 1 || !beaten[levelIndex];
+  // 通关后突出【下一关】：禁用时不加主按钮样式
+  nextBtn.classList.toggle('primary', state.status === 'won' && !nextBtn.disabled);
   workshopBtn.style.display = beaten[MAIN_LEVELS - 1] && levelIndex !== WORKSHOP_INDEX ? '' : 'none';
   workshopBtn.disabled = locked;
   playCustomBtn.disabled =
@@ -645,7 +660,9 @@ function startPlay(apply: () => void, onDone?: () => void): void {
   animating = true;
   highlightZone = null;
   ghostM = null;
-  bannerText.textContent = '';
+  bannerTitle.textContent = '';
+  bannerSub.textContent = '';
+  bannerMeta.textContent = '';
   bannerFormula.textContent = '';
   banner.className = '';
   refreshControls();

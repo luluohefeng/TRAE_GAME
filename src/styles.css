@@ -5,20 +5,20 @@
    ============================================================ */
 
 :root {
-  --bg-deep: #070a11;
-  --panel-line: #2a3350;
+  --bg-deep: #0b1020; /* 页面背景 */
+  --panel-line: #2c3757;
   --line-strong: #3d4a6b;
   --text: #e8eaf0;
   --text-dim: #aab3c8;
   --muted: #828ca6;
-  --accent: #35d0b0; /* 青绿：选中 / 悬停 / 主高亮 */
-  --gold: #f2c14e;   /* 金色：钥匙 / 卡牌次数 */
-  --green: #43d17c;  /* 绿色：锁 / 胜利 */
-  --red: #e05252;    /* 红色：危险区 / 失败 */
+  --accent: #36d6c1; /* 青绿：选中 / 悬停 / 主高亮 */
+  --gold: #ffc857;  /* 金：钥匙 / 卡牌线索 */
+  --green: #4ade80;  /* 成功 / 解锁 / 通关反馈专用 */
+  --red: #fb7185;    /* 危险区 / 失败 */
   --amber: #e0a352;  /* 琥珀：警告 */
   --blue: #7fb3e0;   /* 蓝：提示 */
-  --face: linear-gradient(165deg, #212c4d 0%, #18223c 52%, #131a2e 100%);
-  --face-hover: linear-gradient(165deg, #2a3a66 0%, #1e2a4a 52%, #16203a 100%);
+  --face: linear-gradient(165deg, #223052 0%, #19243a 52%, #15203a 100%);
+  --face-hover: linear-gradient(165deg, #2b3d66 0%, #202c4d 52%, #182540 100%);
   --btn: linear-gradient(180deg, #202a47 0%, #18213a 100%);
   --btn-hover: linear-gradient(180deg, #28345c 0%, #1e2744 100%);
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -40,11 +40,11 @@ body {
   font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   background:
-    radial-gradient(1100px 640px at 50% -8%, rgba(47, 72, 128, 0.28), transparent 62%),
-    radial-gradient(800px 500px at 85% 110%, rgba(53, 208, 176, 0.05), transparent 60%),
+    radial-gradient(1100px 640px at 50% -8%, rgba(56, 84, 148, 0.3), transparent 62%),
+    radial-gradient(800px 500px at 85% 110%, rgba(54, 214, 193, 0.06), transparent 60%),
     repeating-linear-gradient(0deg, rgba(130, 160, 255, 0.03) 0 1px, transparent 1px 46px),
     repeating-linear-gradient(90deg, rgba(130, 160, 255, 0.03) 0 1px, transparent 1px 46px),
-    linear-gradient(180deg, #0a0e17 0%, var(--bg-deep) 100%);
+    linear-gradient(180deg, #0d1424 0%, var(--bg-deep) 100%);
 }
 
 /* ---------- 布局：桌面双栏（不改 DOM 顺序，纯 grid-area 摆放） ---------- */
@@ -129,7 +129,7 @@ h1::after {
   -webkit-text-fill-color: var(--gold);
   margin: 0 16px;
   vertical-align: 6px;
-  filter: drop-shadow(0 0 6px rgba(242, 193, 78, 0.5));
+  filter: drop-shadow(0 0 6px rgba(255, 200, 87, 0.5));
 }
 
 .subtitle {
@@ -145,13 +145,13 @@ h1::after {
   justify-self: center;
   width: min(720px, 100%);
   height: auto;
-  background: #141824;
+  background: var(--bg-deep);
   border: 1px solid var(--panel-line);
   border-radius: 10px;
   box-shadow:
-    0 0 0 6px rgba(20, 28, 48, 0.55),
+    0 0 0 6px rgba(17, 23, 40, 0.6),
     0 14px 42px rgba(0, 0, 0, 0.5),
-    0 0 46px rgba(53, 208, 176, 0.05);
+    0 0 46px rgba(54, 214, 193, 0.06);
 }
 
 /* ---------- 随机事件 ---------- */
@@ -273,7 +273,7 @@ h1::after {
   font-weight: 600;
   letter-spacing: 0.06em;
   color: #d7e0f5;
-  background: rgba(23, 31, 52, 0.72);
+  background: rgba(30, 40, 68, 0.72);
   border: 1px solid var(--panel-line);
   border-radius: 999px;
 }
@@ -299,7 +299,7 @@ h1::after {
   color: #d7e0f5;
 }
 
-/* ---------- 胜负反馈浮层：覆盖在画布格顶部，不占用页面高度 ---------- */
+/* ---------- 胜负反馈浮层：覆盖在画布格内，不占用页面高度 ---------- */
 #banner {
   position: absolute;
   grid-area: canvas;
@@ -308,39 +308,139 @@ h1::after {
   transform: translateX(-50%);
   z-index: 5;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 6px 18px;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  color: var(--text);
-  background: rgba(8, 12, 22, 0.86);
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
-  pointer-events: none;
+  gap: 3px;
+  pointer-events: none; /* 绝不遮挡画布下方的操作按钮 */
 }
 
 #banner:not(.won):not(.lost) {
   display: none;
 }
 
+/* 通关卡片：深色面板 + 成功绿描边与光晕，淡入缩放进场 */
 #banner.won {
-  color: var(--green);
-  border-color: rgba(67, 209, 124, 0.55);
-  text-shadow: 0 0 14px rgba(67, 209, 124, 0.45);
+  padding: 14px 26px 13px;
+  background: linear-gradient(180deg, rgba(20, 30, 52, 0.94), rgba(12, 17, 32, 0.94));
+  border: 1px solid rgba(74, 222, 128, 0.6);
+  border-radius: 14px;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.55),
+    0 0 26px rgba(74, 222, 128, 0.28),
+    inset 0 1px 0 rgba(150, 180, 255, 0.08);
+  animation: banner-in 400ms var(--ease) both;
 }
 
+/* 失败提示：紧凑红色胶囊 */
 #banner.lost {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 18px;
+  background: rgba(12, 17, 32, 0.9);
+  border: 1px solid rgba(251, 113, 133, 0.6);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: banner-in 240ms var(--ease) both;
+}
+
+.banner-title {
+  white-space: nowrap;
+  color: var(--text);
+}
+
+#banner.won .banner-title {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--green);
+  text-shadow: 0 0 16px rgba(74, 222, 128, 0.5);
+}
+
+#banner.lost .banner-title {
+  font-size: 15px;
+  font-weight: 600;
   color: var(--red);
-  border-color: rgba(224, 82, 82, 0.55);
-  text-shadow: 0 0 14px rgba(224, 82, 82, 0.45);
+  text-shadow: 0 0 12px rgba(251, 113, 133, 0.45);
+}
+
+.banner-sub {
+  white-space: nowrap;
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  color: #bff3d6;
+}
+
+.banner-meta {
+  white-space: nowrap;
+  margin-top: 2px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #9aa8c8;
+}
+
+.banner-sub:empty,
+.banner-meta:empty,
+#banner.lost .banner-sub,
+#banner.lost .banner-meta {
+  display: none;
+}
+
+#banner-formula {
+  white-space: nowrap;
 }
 
 #banner-formula .katex {
   color: inherit;
+}
+
+/* 通关卡两侧的金色星芒（呼应钥匙色） */
+#banner.won::before,
+#banner.won::after {
+  content: '✦';
+  position: absolute;
+  font-size: 13px;
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(255, 200, 87, 0.65);
+  opacity: 0;
+  animation: sparkle-in 640ms var(--ease) 300ms forwards;
+}
+
+#banner.won::before {
+  left: -20px;
+  top: 8px;
+}
+
+#banner.won::after {
+  right: -22px;
+  bottom: 12px;
+  animation-delay: 420ms;
+}
+
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes sparkle-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-40deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.25) rotate(10deg);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 #hint-line {
@@ -360,7 +460,7 @@ h1::after {
   align-self: start;
   gap: 8px;
   padding: 12px;
-  background: linear-gradient(180deg, rgba(26, 33, 58, 0.85), rgba(17, 22, 40, 0.85));
+  background: linear-gradient(180deg, rgba(23, 29, 51, 0.92), rgba(14, 18, 33, 0.92));
   border: 1px solid var(--panel-line);
   border-radius: 16px;
   box-shadow:
@@ -432,15 +532,17 @@ select {
   transition-duration: 0.06s;
 }
 
+/* 禁用态只弱化，不做全局降饱和：通关后卡牌仍清晰可读，不与可用态混淆 */
 .card-btn:disabled,
 .undo-btn:disabled,
 .reset-btn:disabled,
 .nav-btn:disabled,
 .quick-btn:disabled {
-  opacity: 0.42;
+  opacity: 0.6;
   cursor: not-allowed;
-  filter: saturate(0.6);
+  filter: none;
   box-shadow: none;
+  border-color: #33405f;
 }
 
 .card-btn:focus-visible,
@@ -470,12 +572,12 @@ select {
 
 .card-btn:hover:not(:disabled) {
   background: var(--face-hover);
-  border-color: rgba(53, 208, 176, 0.65);
+  border-color: rgba(54, 214, 193, 0.65);
   transform: translateY(-4px);
   box-shadow:
     0 12px 26px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(53, 208, 176, 0.18),
-    0 0 22px rgba(53, 208, 176, 0.14);
+    0 0 0 1px rgba(54, 214, 193, 0.18),
+    0 0 22px rgba(54, 214, 193, 0.14);
 }
 
 .card-symbol {
@@ -487,8 +589,8 @@ select {
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--accent);
-  background: rgba(53, 208, 176, 0.08);
-  border: 1px solid rgba(53, 208, 176, 0.4);
+  background: rgba(54, 214, 193, 0.08);
+  border: 1px solid rgba(54, 214, 193, 0.4);
   border-radius: 999px;
 }
 
@@ -499,8 +601,8 @@ select {
   padding: 1px 6px;
   font-size: 10px;
   color: var(--gold);
-  background: rgba(242, 193, 78, 0.08);
-  border: 1px solid rgba(242, 193, 78, 0.35);
+  background: rgba(255, 200, 87, 0.08);
+  border: 1px solid rgba(255, 200, 87, 0.35);
   border-radius: 999px;
 }
 
@@ -527,6 +629,7 @@ select {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
+  color: #f2f6ff;
 }
 
 .card-formula {
@@ -538,6 +641,7 @@ select {
 
 .card-btn .katex {
   font-size: 0.92em;
+  color: #eaf2ff;
 }
 
 .card-desc {
@@ -545,7 +649,7 @@ select {
   font-size: 11px;
   line-height: 1.3;
   text-align: center;
-  color: var(--muted);
+  color: var(--text-dim);
 }
 
 /* ---------- 卡牌悬停数学提示（迷你矩阵形态 + 行列式 + 性质） ---------- */
@@ -643,17 +747,17 @@ select {
 
 .undo-btn:hover:not(:disabled) {
   background: linear-gradient(180deg, #27513f, #1d3a30);
-  border-color: rgba(53, 208, 176, 0.55);
+  border-color: rgba(54, 214, 193, 0.55);
 }
 
 .reset-btn {
-  background: linear-gradient(180deg, #3d2630, #2c1b23);
-  border-color: #63394a;
+  background: linear-gradient(180deg, #452634, #331b22);
+  border-color: #6b3a4c;
 }
 
 .reset-btn:hover:not(:disabled) {
-  background: linear-gradient(180deg, #552f42, #3d2130);
-  border-color: rgba(224, 82, 82, 0.55);
+  background: linear-gradient(180deg, #5c3145, #432030);
+  border-color: rgba(251, 113, 133, 0.55);
 }
 
 .workshop-btn {
@@ -676,14 +780,15 @@ select {
   border-color: #5b84b8;
 }
 
+/* 随机卡关：中性蓝灰，不与成功绿/危险红抢视觉注意力 */
 .gen-btn {
-  background: linear-gradient(180deg, #1d4236, #152f27);
-  border-color: #3d6b60;
+  background: linear-gradient(180deg, #2a3554, #1e2742);
+  border-color: #48567f;
 }
 
 .gen-btn:hover:not(:disabled) {
-  background: linear-gradient(180deg, #29594a, #1c4035);
-  border-color: rgba(53, 208, 176, 0.55);
+  background: linear-gradient(180deg, #38456b, #253150);
+  border-color: #5f70a5;
 }
 
 .demo-btn {
@@ -698,9 +803,25 @@ select {
 
 .demo-btn.running,
 .demo-btn.running:hover:not(:disabled) {
-  background: linear-gradient(180deg, #5a2a2a, #401f1f);
-  border-color: #a05a5a;
-  color: #ffd9d9;
+  background: linear-gradient(180deg, #592837, #3f1c28);
+  border-color: #a0556b;
+  color: #ffe4e9;
+}
+
+/* 通关后“下一关”升级为成功绿主按钮；不可用时保持禁用态，不假扮可点击 */
+.nav-btn.primary,
+.nav-btn.primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #2f7d50, #1f5c38);
+  border-color: rgba(74, 222, 128, 0.7);
+  color: #eafff2;
+  font-weight: 600;
+  box-shadow:
+    0 0 0 1px rgba(74, 222, 128, 0.25),
+    0 0 16px rgba(74, 222, 128, 0.22);
+}
+
+.nav-btn.primary:active:not(:disabled) {
+  background: linear-gradient(180deg, #1f5c38, #2f7d50);
 }
 
 /* ---------- 难度选择 ---------- */
@@ -729,12 +850,12 @@ select {
 }
 
 .difficulty-select:disabled {
-  opacity: 0.42;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .difficulty-select option {
-  background: #141a2c;
+  background: #101827;
   color: var(--text);
 }
 
@@ -748,7 +869,7 @@ select {
   width: 100%;
   max-width: 820px;
   padding: 18px 22px 16px;
-  background: linear-gradient(180deg, rgba(26, 33, 58, 0.85), rgba(17, 22, 40, 0.85));
+  background: linear-gradient(180deg, rgba(23, 29, 51, 0.92), rgba(14, 18, 33, 0.92));
   border: 1px solid var(--panel-line);
   border-radius: 16px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
@@ -796,7 +917,7 @@ select {
   font-size: 15px;
   text-align: center;
   color: var(--text);
-  background: #10151f;
+  background: #0d1424;
   border: 1px solid var(--line-strong);
   border-radius: 5px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -805,12 +926,12 @@ select {
 .matrix-inputs input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 10px rgba(53, 208, 176, 0.25);
+  box-shadow: 0 0 10px rgba(54, 214, 193, 0.25);
 }
 
 .matrix-inputs input.invalid {
   border-color: var(--red);
-  box-shadow: 0 0 8px rgba(224, 82, 82, 0.3);
+  box-shadow: 0 0 8px rgba(251, 113, 133, 0.3);
 }
 
 .quick-row {
@@ -827,12 +948,12 @@ select {
 
 .quick-btn.selected,
 .quick-btn.selected:hover:not(:disabled) {
-  background: rgba(53, 208, 176, 0.16);
+  background: rgba(54, 214, 193, 0.16);
   border-color: var(--accent);
   color: #c9f7ec;
   box-shadow:
-    0 0 0 1px rgba(53, 208, 176, 0.35),
-    0 0 14px rgba(53, 208, 176, 0.18);
+    0 0 0 1px rgba(54, 214, 193, 0.35),
+    0 0 14px rgba(54, 214, 193, 0.18);
 }
 
 #preview-line {
@@ -878,7 +999,7 @@ select {
   justify-content: center;
   gap: 24px;
   padding: 32px;
-  background: radial-gradient(circle at 50% 30%, #141a28 0%, #0b0e14 75%);
+  background: radial-gradient(circle at 50% 30%, #18233c 0%, #0b1020 75%);
 }
 
 #level-select.open {
@@ -896,7 +1017,7 @@ select {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: 4px;
-  color: #f0b429;
+  color: var(--gold);
 }
 
 .level-select-progress {
@@ -973,7 +1094,7 @@ select {
 }
 
 .level-cell.current {
-  outline: 2px solid #f0b429;
+  outline: 2px solid var(--gold);
   outline-offset: 1px;
 }
 

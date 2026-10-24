@@ -24,7 +24,7 @@ function toScreen(view: View, p: Vec2): Vec2 {
 
 const GRID_EXTENT = 10;
 const AXIS_X_COLOR = '#5b8bd4';
-const AXIS_Y_COLOR = '#4fb3a5';
+const AXIS_Y_COLOR = '#36D6C1';
 const AXIS_FONT = '11px "Segoe UI", "Microsoft YaHei", sans-serif';
 const FIXED_AXIS_COLOR = 'rgba(154, 163, 184, 0.6)';
 
@@ -239,9 +239,9 @@ function drawZones(
     const w = zone.w * view.scale;
     const h = zone.h * view.scale;
     const hot = highlight === i;
-    ctx.fillStyle = hot ? 'rgba(224, 82, 82, 0.45)' : 'rgba(224, 82, 82, 0.15)';
+    ctx.fillStyle = hot ? 'rgba(251, 113, 133, 0.5)' : 'rgba(251, 113, 133, 0.18)';
     ctx.fillRect(sx, sy, w, h);
-    ctx.strokeStyle = '#e05252';
+    ctx.strokeStyle = '#FB7185';
     ctx.lineWidth = hot ? 3 : 1.5;
     ctx.strokeRect(sx, sy, w, h);
   });
@@ -252,7 +252,7 @@ function drawZones(
 function drawKey(ctx: CanvasRenderingContext2D, view: View, level: Level, M: Mat2): void {
   const [kx, ky] = level.key;
   const pt = (dx: number, dy: number): Vec2 => toScreen(view, apply(M, [kx + dx, ky + dy]));
-  ctx.strokeStyle = '#f2c14e';
+  ctx.strokeStyle = '#FFC857';
   ctx.lineWidth = Math.max(2, view.scale * 0.07);
   // 钥匙环（12 边形逼近圆，保证随形变正确变换），环心即钥匙锚点
   ctx.beginPath();
@@ -280,30 +280,59 @@ function drawKey(ctx: CanvasRenderingContext2D, view: View, level: Level, M: Mat
   ctx.stroke();
 }
 
-/** 锁：固定不动，不随 M 变换 */
-function drawLock(ctx: CanvasRenderingContext2D, view: View, level: Level): void {
+/** 锁：固定不动，不随 M 变换；victory 时叠加成功绿光晕与少量星芒 */
+function drawLock(ctx: CanvasRenderingContext2D, view: View, level: Level, victory = false): void {
   const [x, y] = toScreen(view, level.lock);
   const s = view.scale;
   const w = 0.6 * s;
   const h = 0.5 * s;
-  ctx.strokeStyle = '#43d17c';
+  ctx.save();
+  if (victory) {
+    ctx.shadowColor = 'rgba(74, 222, 128, 0.85)';
+    ctx.shadowBlur = 22;
+  }
+  ctx.strokeStyle = '#4ADE80';
   ctx.lineWidth = Math.max(2, s * 0.07);
   ctx.beginPath();
   ctx.arc(x, y - h / 2, 0.18 * s, Math.PI, 0);
   ctx.stroke();
-  ctx.fillStyle = '#43d17c';
+  ctx.fillStyle = '#4ADE80';
   ctx.fillRect(x - w / 2, y - h / 2, w, h);
-  ctx.fillStyle = '#0b0e14';
+  ctx.fillStyle = '#0B1020';
   ctx.beginPath();
   ctx.arc(x, y, 0.08 * s, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
+
+  if (victory) {
+    // 四角星芒：金色小菱形点缀，呼应钥匙色
+    ctx.fillStyle = '#FFC857';
+    ctx.globalAlpha = 0.9;
+    const gap = w * 0.62;
+    const r = s * 0.09;
+    for (const [dx, dy] of [
+      [gap, -gap * 0.55],
+      [-gap, -gap * 0.55],
+      [gap, gap * 0.55],
+      [-gap, gap * 0.55],
+    ] as const) {
+      ctx.beginPath();
+      ctx.moveTo(x + dx, y + dy - r);
+      ctx.lineTo(x + dx + r * 0.55, y + dy);
+      ctx.lineTo(x + dx, y + dy + r);
+      ctx.lineTo(x + dx - r * 0.55, y + dy);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
 }
 
 /** 钥匙落点虚影：ghostM 为“打出预览矩阵之后”的累积矩阵 */
 function drawGhostKey(ctx: CanvasRenderingContext2D, view: View, level: Level, ghostM: Mat2): void {
   const [px, py] = toScreen(view, apply(ghostM, level.key));
   ctx.setLineDash([3, 3]);
-  ctx.strokeStyle = 'rgba(242, 193, 78, 0.65)';
+  ctx.strokeStyle = 'rgba(255, 200, 87, 0.65)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(px, py, view.scale * 0.16, 0, Math.PI * 2);
@@ -318,6 +347,7 @@ export function drawScene(
   M: Mat2,
   highlightZone: number | null = null,
   ghostM: Mat2 | null = null,
+  victory = false,
 ): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -327,12 +357,12 @@ export function drawScene(
   // 位图为逻辑尺寸 × DPR：先切到逻辑坐标系绘制，CSS 缩放到位图时保持等比例、无模糊
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = '#141824';
+  ctx.fillStyle = '#0B1020';
   ctx.fillRect(0, 0, w, h);
   drawGrid(ctx, view, M);
   if (ghostM) drawGrid(ctx, view, ghostM, true);
   drawZones(ctx, view, level, highlightZone);
   if (ghostM) drawGhostKey(ctx, view, level, ghostM);
-  drawLock(ctx, view, level);
+  drawLock(ctx, view, level, victory);
   drawKey(ctx, view, level, M);
 }
