@@ -308,15 +308,47 @@ body {
 
 #level-select {
   display: none;
-  grid-template-columns: repeat(8, 44px);
-  gap: 6px;
-  padding: 12px;
-  border: 1px solid #2a3040;
-  border-radius: 6px;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px;
+  background: radial-gradient(circle at 50% 30%, #141a28 0%, #0b0e14 75%);
 }
 
 #level-select.open {
+  display: flex;
+}
+
+.level-select-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.level-select-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #f0b429;
+}
+
+.level-select-hint {
+  font-size: 13px;
+  color: #9aa3b8;
+}
+
+.level-select-grid {
   display: grid;
+  grid-template-columns: repeat(8, 46px);
+  gap: 8px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 4px;
 }
 
 .level-cell {

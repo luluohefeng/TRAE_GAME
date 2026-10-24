@@ -139,15 +139,37 @@ controls.appendChild(demoBtn);
 controls.appendChild(selectBtn);
 app.appendChild(controls);
 
-// ---------- 选关面板 ----------
+// ---------- 选关界面（全屏覆盖层） ----------
 const levelSelect = document.createElement('div');
 levelSelect.id = 'level-select';
+levelSelect.classList.add('screen');
+
+const selectHeader = document.createElement('div');
+selectHeader.className = 'level-select-header';
+const selectTitle = document.createElement('div');
+selectTitle.className = 'level-select-title';
+selectTitle.textContent = '选关';
+const selectHint = document.createElement('div');
+selectHint.className = 'level-select-hint';
+selectHint.textContent = '通关上一关解锁下一关 · 点击任意已解锁关卡开始';
+const selectBackBtn = document.createElement('button');
+selectBackBtn.className = 'nav-btn';
+selectBackBtn.textContent = '返回游戏';
+selectHeader.appendChild(selectTitle);
+selectHeader.appendChild(selectHint);
+levelSelect.appendChild(selectHeader);
+levelSelect.appendChild(selectBackBtn);
+
+const selectGrid = document.createElement('div');
+selectGrid.className = 'level-select-grid';
+levelSelect.appendChild(selectGrid);
+
 app.appendChild(levelSelect);
 let selectOpen = false;
 
 /** 重建 40 格选关网格：按难度着色，通关打 ✓，未解锁置灰 */
 function renderLevelSelect(): void {
-  levelSelect.textContent = '';
+  selectGrid.textContent = '';
   for (let i = 0; i < MAIN_LEVELS; i++) {
     const cell = document.createElement('button');
     const tier = i < 3 ? 'tutorial' : campaignTierOf(i);
@@ -162,19 +184,38 @@ function renderLevelSelect(): void {
     cell.disabled = !isUnlocked(i) || demoRunning;
     cell.addEventListener('click', () => {
       if (animating || demoRunning) return;
-      selectOpen = false;
-      levelSelect.classList.remove('open');
+      closeLevelSelect();
       loadLevelAt(i);
     });
-    levelSelect.appendChild(cell);
+    selectGrid.appendChild(cell);
   }
+}
+
+function openLevelSelect(): void {
+  selectOpen = true;
+  levelSelect.classList.add('open');
+  renderLevelSelect();
+}
+
+function closeLevelSelect(): void {
+  selectOpen = false;
+  levelSelect.classList.remove('open');
 }
 
 selectBtn.addEventListener('click', () => {
   if (animating || demoRunning) return;
-  selectOpen = !selectOpen;
-  levelSelect.classList.toggle('open', selectOpen);
-  if (selectOpen) renderLevelSelect();
+  if (selectOpen) closeLevelSelect();
+  else openLevelSelect();
+});
+
+selectBackBtn.addEventListener('click', () => {
+  if (animating || demoRunning) return;
+  closeLevelSelect();
+});
+
+// 选关界面打开时 Esc 关闭
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && selectOpen) closeLevelSelect();
 });
 
 // ---------- 矩阵工坊面板 ----------
@@ -663,7 +704,7 @@ demoBtn.addEventListener('click', () => {
 
 // ---------- 键盘快捷键：R 重置、Z 撤销、1-3 选卡（输入框聚焦时不触发） ----------
 window.addEventListener('keydown', (e) => {
-  if (demoRunning || animating || aiBusy) return;
+  if (demoRunning || animating || aiBusy || selectOpen) return;
   const t = e.target as HTMLElement | null;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
   if (e.key === 'r' || e.key === 'R') {
