@@ -1,5 +1,6 @@
 import { IDENTITY, apply, isInvertible, multiply, type Mat2, type Vec2 } from './matrix.ts';
-import { CARD_LIBRARY, type LevelJson } from './cards.ts';
+import { cardOfDeckEntry, isValidCard, type DeckJson, type LevelJson } from './cards.ts';
+import type { Card } from './state.ts';
 import { WIN_THRESHOLD } from './judge.ts';
 
 function isFiniteNumber(v: unknown): v is number {
@@ -30,8 +31,21 @@ export function isValidLevelJson(j: unknown): j is LevelJson {
   for (const d of l.deck as unknown[]) {
     if (typeof d !== 'object' || d === null) return false;
     const e = d as Record<string, unknown>;
-    if (typeof e.cardId !== 'string' || !(e.cardId in CARD_LIBRARY)) return false;
+    const card = cardOfDeckEntry(e as unknown as DeckJson);
+    if (!card || !isValidCard(card)) return false;
     if (!Number.isInteger(e.uses) || (e.uses as number) < 1 || (e.uses as number) > 3) return false;
+  }
+  if (l.event !== undefined) {
+    if (typeof l.event !== 'object' || l.event === null) return false;
+    const ev = l.event as Record<string, unknown>;
+    if (
+      typeof ev.id !== 'string' ||
+      typeof ev.title !== 'string' ||
+      typeof ev.description !== 'string' ||
+      typeof ev.detail !== 'string'
+    ) {
+      return false;
+    }
   }
   return true;
 }
@@ -59,6 +73,14 @@ export function bfsMinSteps(level: LevelJson): number | null {
       6,
     )}|${remaining.join(',')}`;
 
+  // 事件可能产生内联合卡，先解析成实际卡牌矩阵
+  const cards: Card[] = [];
+  for (const d of level.deck) {
+    const card = cardOfDeckEntry(d);
+    if (!card) return null;
+    cards.push(card);
+  }
+
   const queue: Node[] = [
     { M: IDENTITY, remaining: level.deck.map((d) => d.uses), steps: 0 },
   ];
@@ -77,9 +99,9 @@ export function bfsMinSteps(level: LevelJson): number | null {
     }
     if (!isInvertible(node.M)) continue;
     if (node.steps >= level.maxSteps) continue;
-    level.deck.forEach((d, i) => {
+    level.deck.forEach((_d, i) => {
       if (node.remaining[i] <= 0) return;
-      const card = CARD_LIBRARY[d.cardId];
+      const card = cards[i];
       const remaining = node.remaining.slice();
       remaining[i]--;
       queue.push({ M: multiply(card.matrix, node.M), remaining, steps: node.steps + 1 });

@@ -9,6 +9,7 @@ import {
   undo,
   type GameState,
   type Level,
+  type RandomEvent,
 } from './game/state.ts';
 import { evaluate } from './game/judge.ts';
 import { loadLevel, type LevelJson } from './game/cards.ts';
@@ -17,6 +18,7 @@ import { createView, drawScene } from './render/canvas.ts';
 import { renderHand, type HandUI } from './render/cards.ts';
 import { renderLatex, toMatrixLatex } from './render/latex.ts';
 import { DIFFICULTY_RULES, generateRandomLevel, type Difficulty } from './game/generator.ts';
+import { generateRandomEventLevel } from './game/events.ts';
 import {
   buildCampaign,
   campaignTierLabel,
@@ -68,11 +70,49 @@ const levelLine = document.createElement('div');
 levelLine.id = 'level-line';
 app.appendChild(levelLine);
 
+const canvasWrap = document.createElement('div');
+canvasWrap.id = 'canvas-wrap';
+
 const canvas = document.createElement('canvas');
 canvas.id = 'game-canvas';
 canvas.width = 800;
 canvas.height = 600;
-app.appendChild(canvas);
+canvasWrap.appendChild(canvas);
+app.appendChild(canvasWrap);
+
+// ---------- 随机事件展示 ----------
+const eventOverlay = document.createElement('div');
+eventOverlay.id = 'event-overlay';
+eventOverlay.hidden = true;
+const eventCard = document.createElement('div');
+eventCard.className = 'event-card';
+const eventKicker = document.createElement('div');
+eventKicker.className = 'event-kicker';
+eventKicker.textContent = '随机事件';
+const eventTitle = document.createElement('div');
+eventTitle.className = 'event-title';
+const eventDesc = document.createElement('div');
+eventDesc.className = 'event-desc';
+const eventHint = document.createElement('div');
+eventHint.className = 'event-hint';
+eventHint.textContent = '按空格收起';
+eventCard.appendChild(eventKicker);
+eventCard.appendChild(eventTitle);
+eventCard.appendChild(eventDesc);
+eventCard.appendChild(eventHint);
+eventOverlay.appendChild(eventCard);
+canvasWrap.appendChild(eventOverlay);
+
+const eventBadge = document.createElement('div');
+eventBadge.id = 'event-badge';
+eventBadge.hidden = true;
+const eventBadgeTitle = document.createElement('strong');
+const eventBadgeDesc = document.createElement('span');
+eventBadgeDesc.className = 'event-badge-desc';
+eventBadge.appendChild(eventBadgeTitle);
+eventBadge.appendChild(eventBadgeDesc);
+canvasWrap.appendChild(eventBadge);
+// ---------- 事件展示结束 ----------
 
 const stackLine = document.createElement('div');
 stackLine.id = 'stack-line';
@@ -307,6 +347,8 @@ let state: GameState = createGame(levels[0]);
 let hand: HandUI;
 let displayM: Mat2 = IDENTITY;
 let animating = false;
+/** 随机事件大字卡展开中：暂时锁住手牌与导航，按空格收起 */
+let eventOpen = false;
 /** 失败时高亮的禁区下标（无则 null） */
 let highlightZone: number | null = null;
 /** 工坊预览的空间虚影矩阵（预览矩阵 · 当前矩阵），null 不画 */
@@ -349,6 +391,61 @@ function isUnlocked(index: number): boolean {
 function redraw(): void {
   drawScene(canvas, view, state.level, displayM, highlightZone, ghostM);
 }
+
+function showEventBadge(event: RandomEvent): void {
+  eventBadgeTitle.textContent = event.title;
+  eventBadgeDesc.textContent = event.detail;
+  eventBadge.hidden = false;
+  requestAnimationFrame(() => eventBadge.classList.add('visible'));
+}
+
+function hideEventBadge(): void {
+  eventBadge.hidden = true;
+  eventBadge.classList.remove('visible');
+}
+
+/** 隐藏事件（切到无事件关卡时调用） */
+function hideEvent(): void {
+  eventOpen = false;
+  eventOverlay.hidden = true;
+  eventOverlay.classList.remove('collapsed');
+  hideEventBadge();
+}
+
+/** 展开事件大字卡 */
+function showEvent(event: RandomEvent): void {
+  eventTitle.textContent = event.title;
+  eventDesc.textContent = event.description;
+  hideEventBadge();
+  eventOverlay.hidden = false;
+  eventOverlay.classList.remove('collapsed');
+  eventOpen = true;
+  refreshControls();
+  // 控制区在画布下方，生成事件时先把画布滚到视口中央，收起后左上角小字才不会跑到屏幕外
+  canvasWrap.scrollIntoView({ block: 'center' });
+}
+
+/** 空格/点击：大字卡缩小为画布左上角小字 */
+function collapseEvent(): void {
+  if (eventOverlay.hidden || eventOverlay.classList.contains('collapsed')) return;
+  eventOverlay.classList.add('collapsed');
+  const event = state.level.event;
+  if (event) showEventBadge(event);
+  eventOpen = false;
+  refreshControls();
+  window.setTimeout(() => {
+    if (eventOverlay.classList.contains('collapsed')) eventOverlay.hidden = true;
+  }, 260);
+}
+
+/** 加载关卡时同步事件状态：有事件则只显示左上角小字，无事件则清空 */
+function syncEventUI(index: number): void {
+  const event = levels[index].event;
+  hideEvent();
+  if (event) showEventBadge(event);
+}
+
+eventOverlay.addEventListener('click', collapseEvent);
 
 function updateLevelLine(): void {
   if (levelIndex < MAIN_LEVELS) {
@@ -425,20 +522,21 @@ function updateBanner(): void {
 
 /** 统一刷新按钮可用态：动画或演示期间全部冻结，防止连点重复结算 */
 function refreshControls(): void {
-  hand.setEnabled(!animating && !demoRunning && state.status === 'playing');
-  undoBtn.disabled = animating || demoRunning || state.stack.length === 0;
-  resetBtn.disabled = animating || demoRunning;
-  prevBtn.disabled = animating || demoRunning || levelIndex === 0;
-  nextBtn.disabled = animating || demoRunning || levelIndex >= MAIN_LEVELS - 1 || !beaten[levelIndex];
+  const locked = animating || demoRunning || eventOpen;
+  hand.setEnabled(!locked && state.status === 'playing');
+  undoBtn.disabled = locked || state.stack.length === 0;
+  resetBtn.disabled = locked;
+  prevBtn.disabled = locked || levelIndex === 0;
+  nextBtn.disabled = locked || levelIndex >= MAIN_LEVELS - 1 || !beaten[levelIndex];
   workshopBtn.style.display = beaten[MAIN_LEVELS - 1] && levelIndex !== WORKSHOP_INDEX ? '' : 'none';
-  workshopBtn.disabled = animating || demoRunning;
+  workshopBtn.disabled = locked;
   playCustomBtn.disabled =
-    levelIndex !== WORKSHOP_INDEX || animating || demoRunning || state.status !== 'playing' || !inputsValid;
-  for (const b of quickBtns) b.disabled = animating || demoRunning;
-  hintBtn.disabled = aiBusy || animating || demoRunning;
-  randomLevelBtn.disabled = aiBusy || animating || demoRunning;
-  difficultySelect.disabled = animating || demoRunning;
-  selectBtn.disabled = animating || demoRunning;
+    levelIndex !== WORKSHOP_INDEX || locked || state.status !== 'playing' || !inputsValid;
+  for (const b of quickBtns) b.disabled = locked;
+  hintBtn.disabled = aiBusy || locked;
+  randomLevelBtn.disabled = aiBusy || locked;
+  difficultySelect.disabled = locked;
+  selectBtn.disabled = locked;
 }
 
 // ---------- 工坊输入校验与预览 ----------
@@ -503,6 +601,7 @@ function loadLevelAt(index: number): void {
   ghostM = null;
   if (!demoRunning) hintLine.textContent = ''; // 演示期间保留解说字幕
   hand = renderHand(handEl, state.level.deck, onPlay);
+  syncEventUI(index);
   workshopPanel.style.display = index === WORKSHOP_INDEX ? '' : 'none';
   refreshAll();
   renderLevelSelect();
@@ -552,12 +651,12 @@ function startPlay(apply: () => void, onDone?: () => void): void {
 }
 
 function onPlay(deckIndex: number): void {
-  if (animating || state.status !== 'playing') return;
+  if (eventOpen || animating || state.status !== 'playing') return;
   startPlay(() => applyCard(state, deckIndex));
 }
 
 playCustomBtn.addEventListener('click', () => {
-  if (animating || state.status !== 'playing') return;
+  if (eventOpen || animating || state.status !== 'playing') return;
   const { valid, values } = parseInputs(); // 打出前二次校验
   if (!valid) return;
   const m: Mat2 = [
@@ -623,8 +722,14 @@ hintBtn.addEventListener('click', () => {
 randomLevelBtn.addEventListener('click', () => {
   if (aiBusy || animating || demoRunning) return;
   const difficulty = difficultySelect.value as Difficulty;
-  levels.push(loadLevel(generateRandomLevel(difficulty)));
+  // 只有普通/困难会带随机事件；简单模式保持无事件
+  const withEvent = difficulty === 'normal' || difficulty === 'hard';
+  const level = loadLevel(
+    withEvent ? generateRandomEventLevel(difficulty) : generateRandomLevel(difficulty),
+  );
+  levels.push(level);
   loadLevelAt(levels.length - 1);
+  if (level.event) showEvent(level.event);
 });
 
 // ---------- 演示模式 ----------
@@ -702,11 +807,20 @@ demoBtn.addEventListener('click', () => {
   });
 });
 
-// ---------- 键盘快捷键：R 重置、Z 撤销、1-3 选卡（输入框聚焦时不触发） ----------
+// ---------- 键盘快捷键：空格收起事件、R 重置、Z 撤销、1-3 选卡（输入框聚焦时不触发） ----------
 window.addEventListener('keydown', (e) => {
-  if (demoRunning || animating || aiBusy || selectOpen) return;
   const t = e.target as HTMLElement | null;
-  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+  const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA');
+  // 事件大字卡展开时：空格收起，其他游戏快捷键暂时失效
+  if (eventOpen) {
+    if (!typing && (e.code === 'Space' || e.key === ' ')) {
+      e.preventDefault();
+      collapseEvent();
+    }
+    return;
+  }
+  if (demoRunning || animating || aiBusy || selectOpen) return;
+  if (typing) return;
   if (e.key === 'r' || e.key === 'R') {
     if (!resetBtn.disabled) resetBtn.click();
   } else if (e.key === 'z' || e.key === 'Z') {

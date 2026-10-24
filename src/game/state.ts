@@ -23,6 +23,19 @@ export interface DeckEntry {
   uses: number;
 }
 
+/** 随机事件（仅普通/困难模式的随机关卡出现） */
+export type RandomEventId = 'seal' | 'supply' | 'contract' | 'fusion' | 'mirrorStorm';
+
+export interface RandomEvent {
+  id: RandomEventId;
+  /** 事件大标题，如「封印」 */
+  title: string;
+  /** 事件效果说明（大字下方的小字） */
+  description: string;
+  /** 收起后左上角小字用的简短说明 */
+  detail: string;
+}
+
 export interface Level {
   id: string;
   name: string;
@@ -31,6 +44,8 @@ export interface Level {
   forbidden: ForbiddenZone[];
   maxSteps: number;
   deck: DeckEntry[];
+  /** 仅随机关卡可能带有事件 */
+  event?: RandomEvent;
 }
 
 export type GameStatus = 'playing' | 'won' | 'lost';

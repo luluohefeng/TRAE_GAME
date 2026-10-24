@@ -5,6 +5,7 @@ import { FALLBACK_HINTS, FALLBACK_LEVELS, pickFallbackHint } from '../ai/fallbac
 import { sanitizeHint } from '../ai/client.ts';
 import { bfsMinSteps, isValidLevelJson } from './validate.ts';
 import { DIFFICULTY_RULES, generateRandomLevel, type Difficulty } from './generator.ts';
+import { generateRandomEventLevel } from './events.ts';
 import {
   buildCampaign,
   campaignTierLabel,
@@ -269,6 +270,21 @@ test('战役关卡全部可解且确定性生成', () => {
       isValidLevelJson(l) &&
       bfsMinSteps(l) === l.maxSteps &&
       campaignTierLabel(i + CAMPAIGN_START).length > 0,
+  );
+});
+
+// 16. 随机事件：仅在普通/困难生成，带事件、Schema 合法且 BFS 可解
+test('随机事件仅普通/困难出现且可解', () => {
+  for (const d of ['normal', 'hard'] as Difficulty[]) {
+    for (let i = 0; i < 2; i++) {
+      const lvl = generateRandomEventLevel(d);
+      if (!lvl.event) return false;
+      if (!isValidLevelJson(lvl)) return false;
+      if (bfsMinSteps(lvl) === null) return false;
+    }
+  }
+  return (['easy', 'normal', 'hard'] as Difficulty[]).every(
+    (d) => generateRandomLevel(d).event === undefined,
   );
 });
 
