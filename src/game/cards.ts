@@ -32,7 +32,19 @@ export const CARD_LIBRARY: Record<string, Card> = {
     name: 'Y 轴镜像',
     matrix: [[-1, 0], [0, 1]],
     symbol: 'M',
-  },  
+  },
+  rotate180: {
+    id: 'rotate180',
+    name: '旋转 180°',
+    matrix: [[-1, 0], [0, -1]],
+    symbol: 'R',
+  },
+  swapXY: {
+    id: 'swapXY',
+    name: '对角翻转',
+    matrix: [[0, 1], [1, 0]],
+    symbol: 'F',
+  },
 };
 
 /** 关卡 JSON 的原始结构（deck 用 cardId 引用卡库） */
